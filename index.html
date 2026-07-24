@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,11 +28,6 @@
             <li class="nav-item">
                 <a class="nav-link" id="tab-view" href="#" onclick="showTab('view')">View</a>
             </li>
-
-            <!-- NEW MATH TAB -->
-            <li class="nav-item">
-                <a class="nav-link" id="tab-math" href="#" onclick="showTab('math')">Math</a>
-            </li>
         </ul>
     </div>
 </nav>
@@ -39,47 +35,32 @@
 <div class="container">
     <div id="alertBox" class="mb-3" style="display:none;"></div>
 
-    <div id="addTab">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card shadow-lg p-4">
-                    <h2 class="h4 mb-3">Add Homework</h2>
+<div id="addTab">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg p-4">
+                <h2 class="h4 mb-3">Add Homework</h2>
 
-                    <div class="d-flex mb-3">
-                        <select id="subject" class="form-select me-2"></select>
-                        <button class="btn btn-outline-light" onclick="openSubjectDialog()">+</button>
-                    </div>
-
-                    <input id="title" class="form-control mb-3" placeholder="Title">
-                    <input type="date" id="date" class="form-control mb-3">
-                    <textarea id="desc" class="form-control mb-3" rows="3" placeholder="Description"></textarea>
-                    <button class="btn btn-primary w-100" onclick="saveHomework()">Save Homework</button>
+                <div class="d-flex mb-3">
+                    <select id="subject" class="form-select me-2"></select>
+                    <button class="btn btn-outline-light" onclick="openSubjectDialog()">+</button>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div id="viewTab" style="display:none;"></div>
-
-    <!-- NEW MATH PAGE -->
-    <div id="mathTab" style="display:none;">
-        <div class="row justify-content-center">
-            <div class="col-md-10 col-lg-8">
-                <div class="card shadow-lg p-4">
-                    <h2 class="h3 mb-3">Math</h2>
-                    <p>Welcome to the Math tab! You can add calculators, formulas, practice questions, or any other math tools here later.</p>
-
-                    <div class="mt-4 p-3 rounded" style="background:#020617;">
-                        <h5>Quick Formula</h5>
-                        <p class="mb-0">Area of a circle = π × r²</p>
-                    </div>
-                </div>
+                <input id="title" class="form-control mb-3" placeholder="Title">
+                <input type="date" id="date" class="form-control mb-3">
+                <textarea id="desc" class="form-control mb-3" rows="3" placeholder="Description"></textarea>
+                <button class="btn btn-primary w-100" onclick="saveHomework()">Save Homework</button>
             </div>
         </div>
     </div>
 </div>
 
+<div id="viewTab" style="display:none;"></div>
+
+</div>
+
 <!-- ADD SUBJECT DIALOG -->
+
 <div id="subjectDialog" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;">
     <div style="background:#1e293b;padding:20px;border-radius:10px;width:300px;">
         <h5>Add Subject</h5>
@@ -92,6 +73,7 @@
 </div>
 
 <!-- DELETE SUBJECT DIALOG -->
+
 <div id="deleteDialog" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;">
     <div style="background:#1e293b;padding:20px;border-radius:10px;width:320px;">
         <h5 id="deleteText"></h5>
@@ -103,43 +85,218 @@
 </div>
 
 <script>
-// KEEP ALL YOUR EXISTING SCRIPT HERE
-// (I did not remove or change anything)
+let data = JSON.parse(localStorage.getItem('hw')) || {};
+let openSubject = null;
 
-// NEW CODE ADDED ONLY
-const originalShowTab = showTab;
+let subjects = JSON.parse(localStorage.getItem('subjects')) || 
+['Math','Science','SST','English','Hindi','ICT'];
 
-showTab = function(tab){
-    originalShowTab(tab);
+let deleteTarget = null;
 
-    // hide all tabs first
-    document.getElementById('addTab').style.display = 'none';
-    document.getElementById('viewTab').style.display = 'none';
-    document.getElementById('mathTab').style.display = 'none';
+/* SUBJECT SYSTEM */
+function loadSubjects(){
+    let select = document.getElementById('subject');
+    select.innerHTML = '';
+    subjects.forEach(s=>{
+        let opt = document.createElement('option');
+        opt.textContent = s;
+        select.appendChild(opt);
+    });
+}
 
-    // remove active state
-    document.getElementById('tab-add').classList.remove('active');
-    document.getElementById('tab-view').classList.remove('active');
-    document.getElementById('tab-math').classList.remove('active');
+function openSubjectDialog(){
+    document.getElementById('subjectDialog').style.display = 'flex';
+}
 
-    // show selected tab
-    if(tab==='add'){
-        document.getElementById('addTab').style.display = 'block';
-        document.getElementById('tab-add').classList.add('active');
+function closeSubjectDialog(){
+    document.getElementById('subjectDialog').style.display = 'none';
+}
+
+function addSubject(){
+    let val = document.getElementById('newSubject').value.trim();
+    if(!val) return;
+    if(!subjects.includes(val)){
+        subjects.push(val);
+        localStorage.setItem('subjects', JSON.stringify(subjects));
+        loadSubjects();
+    }
+    document.getElementById('newSubject').value = '';
+    closeSubjectDialog();
+}
+
+/* DELETE SUBJECT */
+function openDeleteDialog(subject){
+    deleteTarget = subject;
+    document.getElementById('deleteText').innerText = `Do you want to delete "${subject}"?`;
+    document.getElementById('deleteDialog').style.display = 'flex';
+}
+
+function closeDeleteDialog(){
+    document.getElementById('deleteDialog').style.display = 'none';
+}
+
+function confirmDelete(){
+    if(deleteTarget){
+        subjects = subjects.filter(s => s !== deleteTarget);
+        delete data[deleteTarget];
+
+        localStorage.setItem('subjects', JSON.stringify(subjects));
+        localStorage.setItem('hw', JSON.stringify(data));
+
+        deleteTarget = null;
+        closeDeleteDialog();
+        loadSubjects();
+        render();
+    }
+}
+
+function showTab(tab){
+    document.getElementById('addTab').style.display = tab==='add'?'block':'none';
+    document.getElementById('viewTab').style.display = tab==='view'?'block':'none';
+    
+    document.getElementById('tab-add').classList.toggle('active', tab === 'add');
+    document.getElementById('tab-view').classList.toggle('active', tab === 'view');
+    
+    if(tab==='view') render();
+}
+
+function saveHomework(){
+    let s=document.getElementById('subject').value;
+    let t=document.getElementById('title').value.trim();
+    let d=document.getElementById('date').value;
+    let desc=document.getElementById('desc').value;
+    if(!t) return;
+    if(!data[s]) data[s]=[];
+    data[s].push({title:t,date:d,desc:desc});
+    localStorage.setItem('hw',JSON.stringify(data));
+    alert('Homework Saved!');
+}
+
+function getDiff(date){
+    let today=new Date();
+    today.setHours(0,0,0,0);
+    let due=new Date(date);
+    return Math.ceil((due-today)/(1000*60*60*24));
+}
+
+function checkAlerts(){
+    let box=document.getElementById('alertBox');
+    let result={};
+
+    for(let s in data){
+        data[s].forEach(hw=>{
+            if(!hw.date) return;
+            let diff=getDiff(hw.date);
+
+            if(diff<0){
+                if(!result[s] || result[s].type!=='overdue' || Math.abs(diff)>result[s].days){
+                    result[s]={type:'overdue',days:Math.abs(diff)};
+                }
+            } else if(diff<=3){
+                if(!result[s]) result[s]={type:'soon',days:diff};
+                else if(result[s].type==='soon' && diff<result[s].days) result[s].days=diff;
+            }
+        });
     }
 
-    if(tab==='view'){
-        document.getElementById('viewTab').style.display = 'block';
-        document.getElementById('tab-view').classList.add('active');
+    let html='';
+    for(let s in result){
+        let r=result[s];
+        if(r.type==='overdue'){
+            html += `<div class="alert alert-danger py-2 mb-2">⚠️ <strong>${s}</strong> overdue by ${r.days} day${r.days==1?'':'s'}</div>`;
+        } else {
+            html += `<div class="alert alert-warning py-2 mb-2">🟡 <strong>${s}</strong> due in ${r.days} day${r.days==1?'':'s'}</div>`;
+        }
     }
 
-    if(tab==='math'){
-        document.getElementById('mathTab').style.display = 'block';
-        document.getElementById('tab-math').classList.add('active');
+    if(html){box.innerHTML=html;box.style.display='block';}
+    else box.style.display='none';
+}
+
+function render(){
+    checkAlerts();
+    let view=document.getElementById('viewTab');
+    view.innerHTML='';
+
+    if(Object.keys(data).length===0){
+        view.innerHTML = `
+            <div class="text-center mt-5 opacity-50">
+                <div style="font-size: 4rem;">🤸</div>
+                <h3>No Homework!</h3>
+            </div>`;
+        return;
     }
-};
+
+    for(let s in data){
+        let container = document.createElement('div');
+        container.className = 'mb-3';
+
+        let header = document.createElement('div');
+        header.className = 'card subject-header p-3 fw-bold d-flex justify-content-between align-items-center flex-row';
+        header.innerHTML = `<span>${s}</span> <span class="badge bg-secondary">${data[s].length}</span>`;
+
+        // CLICK
+        header.onclick = () => {
+            openSubject = openSubject === s ? null : s;
+            render();
+        };
+
+        // DOUBLE CLICK TO DELETE
+        header.ondblclick = () => {
+            openDeleteDialog(s);
+        };
+
+        let list = document.createElement('div');
+        list.className = 'mt-2 ms-3';
+        list.style.display = openSubject === s ? 'block' : 'none';
+
+        data[s].forEach((hw, i) => {
+            let hwDiv = document.createElement('div');
+            hwDiv.className = 'homework-item shadow-sm';
+
+            let diff = hw.date ? getDiff(hw.date) : null;
+            let statusBadge = '';
+            
+            if(diff !== null) {
+                if(diff < 0) statusBadge = `<span class="text-danger fw-bold">🔴 Late ${Math.abs(diff)}d</span>`;
+                else if(diff <= 3) statusBadge = `<span class="text-warning fw-bold">🟡 Due ${diff}d</span>`;
+            }
+
+            hwDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-bold">${hw.title} ${statusBadge}</div>
+                        <div class="desc" id="desc-${s}-${i}">${hw.desc || 'No description'}</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-success ms-2" onclick="event.stopPropagation(); deleteHW('${s}',${i})">Done</button>
+                </div>
+            `;
+
+            hwDiv.onclick = () => {
+                let d = document.getElementById(`desc-${s}-${i}`);
+                d.style.display = d.style.display === 'none' ? 'block' : 'none';
+            };
+
+            list.appendChild(hwDiv);
+        });
+
+        container.appendChild(header);
+        container.appendChild(list);
+        view.appendChild(container);
+    }
+}
+
+function deleteHW(s,i){
+    data[s].splice(i,1);
+    if(data[s].length===0){delete data[s];openSubject=null;}
+    localStorage.setItem('hw',JSON.stringify(data));
+    render();
+}
+
+loadSubjects();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
